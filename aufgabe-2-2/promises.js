@@ -1,10 +1,10 @@
-const fs = require("fs");
+const fs = require("fs").promises;
 
 function leseDateiInhalt(filepath) {
     return fs.readFile(filepath, "utf-8");
 }
 
-leseDateiInhalt('beispiel.txt')
+leseDateiInhalt('aufgabe-2-2/beispiel.txt')
     .then(inhalt => {
         console.log('Die Länge des Dateiinhalts beträgt:', inhalt.length);
     })
