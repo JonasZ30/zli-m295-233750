@@ -22,6 +22,15 @@ app.get("/name", (req, res) => {
     const random = names[Math.floor(Math.random() * names.length)];
     res.send(`Willkommen auf dieser Webseite ${random}`)
 })
+app.use(express.urlencoded({extended: true}))
+
+app.post("/names", (req, res) => {
+    console.log(req.body.name);
+    names.push(req.body.name);
+    console.log(names);
+    res.send(JSON.stringify(names));
+});
+
 
 // Static.html öffnen
 app.get("/html", (req, res) => {
@@ -49,6 +58,15 @@ app.get("/secret", (req, res) => {
     res.sendStatus(403)
 })
 
+app.get("/secret2", (req, res) => {
+    const authorization = req.headers["authorization"];
+    if(authorization === "Basic aGFja2VyOjEyMzQ="){
+        res.sendStatus(200)
+    } else{
+        res.sendStatus(401)
+    }
+})
+
 // example.xml öffnen
 app.get("/xml", (req, res) => {
     res.sendFile(__dirname + "/example.xml")
@@ -65,5 +83,6 @@ const me = [{
 app.get("/me", (req, res) => {
     res.send(me)
 })
+
 
 app.listen(3400)
