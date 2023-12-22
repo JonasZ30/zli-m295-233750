@@ -1,6 +1,8 @@
 const express = require('express')
+const swagger = require("swagger-autogen")
+const swaggerUI = require("swagger-ui-express")
 const app = express()
-const port = 3800
+const port = 3900
 
 app.use(express.json());
 app.use(express.urlencoded({extended: true}));
@@ -85,8 +87,8 @@ let books = [
 
 
 app.get('/books', (request, response) => {
-    response.send(books);
-});
+    response.status(200).send(books);
+  });
   
 
 app.post("/books", (request, response) => {
@@ -100,19 +102,21 @@ app.post("/books", (request, response) => {
 app.get("/books/:isbn", (request, response) => {
     const book = books.find((book) => book.isbn === request.params.isbn);
     if (book) {
-        response.send(book);
+      response.status(200).send(book);
+    } else {
+      response.status(404).send("Book not found");
     }
-});
+  });
 
 app.put('/books/:isbn', (request, response) => {
   const book = books.map((book) => book.isbn === request.params.isbn ? request.body : book);
-    response.send(book)
+    response.status(200).send(book)
 
 });
 
 app.delete('/books/:isbn', (request, response) => {
   const book = books.filter((book) => book.isbn !== request.params.isbn);
-  response.send(book)
+  response.status(200).send(book)
 });
 
 app.patch('/books/:isbn', (request, response) => {
@@ -120,7 +124,7 @@ app.patch('/books/:isbn', (request, response) => {
     const oldBook = books.find((book) => book.isbn === request.params.isbn );
     keys.forEach((key) => oldBook[key] = request.body[key]);
     books = books.map((book) => book.isbn === request.params.isbn ? oldBook : book);
-    response.send(books);
+    response.status(200).send(books);
   });
 
 
@@ -188,40 +192,56 @@ let lends = [
 
 
 app.get("/lends", (request, response) => {
-  response.status(200).send(lends);
-});
+    response.status(200).send(lends);
+  });
 
 app.get("/lends/:id", (request, response) => {
-  const lend = lends.find((lend) => lend.id === request.params.id);
-  if (lend) {
-    response.status(200).send(lend);
-  } else {
-    response.status(404).send("Lend not found");
-  }
-});
+    const lend = lends.find((lend) => lend.id === request.params.id);
+    if (lend) {
+      response.status(200).send(lend);
+    } else {
+      response.status(404).send("Lend not found");
+    }
+  });
 
-app.post("/lends", (request,response) => {
-  const newLend = request.body;
-  newLend['borrowed_at'] = new Date().toISOString();
-  lends = [...lends, request.body];
-  response.status(201).send(lends);
-})
+  app.post("/lends", (request,response) => {
+    const newLend = request.body;
+    newLend['borrowed_at'] = new Date().toISOString();
+    lends = [...lends, request.body];
+    response.status(201).send(lends);
+  })
+  
 
 app.patch("/lends/:id", (request, response) => {
     const keys = Object.keys(request.body);
-    const oldLend = lends.find((lend) => lend.id === request.params.id );
+    const oldLend = lends.find((lend) => lend.id === request.params.id);
     keys.forEach((key) => oldLend[key] = request.body[key]);
     lends = lends.map((lend) => lend.id === request.params.id ? oldLend : lend);
+    response.status(200).send(lends);
+  });
+
+  // Kopie vom Plenum
+  app.delete('/lends/:id', (request, response) => {
+    const returnedLend = lends.find((lend) => lend.id === request.params.id)
+    returnedLend['returned_at'] = new Date().toISOString();
     response.send(lends);
-})
+  });
 
-app.delete('/lends/:id', (request, response) => {
-  const returnedLend = lends.find((lend) => lend.id === request.params.id)
-  returnedLend['returned_at'] = new Date().toISOString();
-  response.send(lends);
-});
-
-
+  const doc = {
+    info: {
+      title: 'All APIs',
+      description: 'Testing Swagger',
+      version: "0.1.0",
+    },
+  };
+  
+  const myAPI = ["./openAPI.js"]
+  const swaggerDocument = "./swagger.json"
+  swagger(swaggerDocument,myAPI, doc) .then(() =>{
+    const document = require(swaggerDocument);
+    app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(document, doc));
+  })
+ 
 
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`)
